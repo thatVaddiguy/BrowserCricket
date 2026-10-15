@@ -16,3 +16,6 @@ tools
 Dockerfile
 docker-compose.yml
 .dockerignore
+
+# Documentation images are not part of the game
+docs

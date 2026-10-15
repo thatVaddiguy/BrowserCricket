@@ -121,7 +121,7 @@
     .innings-breakdown b { display: block; font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
     .innings-breakdown span { font-size: 8px; color: #aebba5; text-transform: uppercase; letter-spacing: .8px; }
     .modal p.top-scorer { font-size: 11px; line-height: 1.6; }
-    .modal p.record-line { font-size: 11px; line-height: 1.6; color: #c9d5c3; margin-top: 4px; }
+    .modal p.record-line { font-size: 11px; line-height: 1.6; color: #c9d5c3; margin-top: 4px; max-width: 400px; }
     .modal p.record-line[data-new-best="true"] { color: var(--accent); font-weight: 650; }
     .match-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; text-align: left; }
     .match-settings label { margin-bottom: 5px; }

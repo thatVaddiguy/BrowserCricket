@@ -1,5 +1,7 @@
 # Crease cricket game
 
+![A delivery on its way to the batter under the stadium lights](docs/screenshots/delivery.jpg)
+
 A modular React and Three.js WebGL batting game. Play a **Quick** 12-ball
 innings with three wickets or a **Classic** 30-ball innings with five, either
 as a free innings or chasing a target. Players and spectators use a licensed
@@ -7,6 +9,27 @@ Rocketbox human library asset adapted in Blender to cricket rigs and equipment.
 Stadium textures, wickets,
 ball art, and optional sound effects are generated locally; there are no
 external image, font, or audio requests.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/intro.jpg" alt="Start screen with difficulty, format and chase mode settings"></td>
+    <td width="50%"><img src="docs/screenshots/running.jpg" alt="Ball-follow camera on a cover drive into the deep while the batters run a second"></td>
+  </tr>
+  <tr>
+    <td><b>Pick your innings.</b> Difficulty, Quick or Classic format, and a free innings or a target chase.</td>
+    <td><b>Run between the wickets.</b> The ball-follow camera tracks the hit while the minimap shows both batters, the fielders and the ball.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/chase-won.jpg" alt="Chase complete result card with innings breakdown and a new personal best"></td>
+    <td align="center"><img src="docs/screenshots/mobile.jpg" alt="The game on a phone with touch shot buttons and the running minimap" width="52%"></td>
+  </tr>
+  <tr>
+    <td><b>Finish the chase.</b> The result card shows the margin, an innings breakdown and your personal bests.</td>
+    <td><b>Play on a phone.</b> Touch buttons for every shot and for running.</td>
+  </tr>
+</table>
 
 ## Requirements
 
