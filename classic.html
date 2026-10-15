@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111716">
+  <meta name="description" content="A self-contained, timing-based 3D-perspective cricket batting game. Twelve balls. Three wickets. One perfect shot.">
+  <title>Crease — The 12-Ball Challenge</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111716;
+      --panel: #19201e;
+      --line: #303a34;
+      --muted: #93a197;
+      --text: #f1f4e9;
+      --accent: #d9ef87;
+      --orange: #f5a461;
+      --red: #fc817a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 0%, #233027 0, var(--bg) 58%);
+      color: var(--text);
+      font: 14px/1.5 "Segoe UI", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; cursor: pointer; touch-action: manipulation; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    button:disabled { cursor: default; opacity: .45; }
+    .shell { max-width: 1440px; padding: 27px 36px 22px; margin: auto; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 34px; height: 36px; display: grid; place-items: center;
+      border: 1px solid #5c7051; border-radius: 9px; background: #d9ef8710; color: var(--accent);
+    }
+    .brand-name { font-size: 25px; font-weight: 850; letter-spacing: -1.5px; line-height: 1; }
+    .brand-sub { font-size: 9px; letter-spacing: 2.3px; color: var(--muted); margin-top: 5px; }
+    .header-actions { display: flex; align-items: center; gap: 9px; }
+    .offline { font-size: 10px; letter-spacing: 1.4px; color: #b9c5b9; margin-right: 15px; }
+    .dot { display: inline-block; height: 5px; width: 5px; border-radius: 50%; background: var(--accent); margin-right: 7px; vertical-align: 2px; }
+    .icon-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      height: 36px; min-width: 36px; color: #c3cec2; border: 1px solid var(--line);
+      border-radius: 8px; background: #ffffff03; transition: background .15s;
+    }
+    .icon-btn:hover { background: #ffffff0b; }
+    .icon-btn svg { width: 16px; height: 16px; }
+    .restart-btn { padding: 0 11px; font-size: 11px; }
+    .page-heading { display: flex; justify-content: space-between; align-items: end; margin: 32px 0 18px; gap: 15px; }
+    h1 { font-size: clamp(23px, 2.6vw, 35px); line-height: 1.1; font-weight: 650; letter-spacing: -1.15px; margin: 0 0 8px; }
+    .page-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+    .session-tag { font-size: 9px; letter-spacing: 1.5px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 5px; white-space: nowrap; color: #aebaad; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 284px; gap: 18px; align-items: stretch; }
+    .arena {
+      position: relative; overflow: hidden; border-radius: 13px; border: 1px solid #3e4b3d;
+      background: #243c2f; min-height: 565px; isolation: isolate;
+    }
+    canvas { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
+    .arena::after { content: ""; pointer-events: none; position: absolute; inset: 0; box-shadow: inset 0 0 80px #0003; border-radius: inherit; }
+    .arena-top { position: absolute; left: 22px; top: 19px; right: 22px; display: flex; justify-content: space-between; align-items: start; gap: 12px; pointer-events: none; }
+    .venue { text-shadow: 0 1px 5px #0008; }
+    .eyebrow { font-size: 9px; font-weight: 650; letter-spacing: 1.9px; color: var(--muted); text-transform: uppercase; }
+    .venue .eyebrow { color: #e2eac8; }
+    .venue-name { font-size: 12px; font-weight: 600; margin-top: 4px; }
+    .live-badge { display: inline-block; font-size: 8px; letter-spacing: 1.6px; border: 1px solid #f1f4e936; border-radius: 3px; padding: 2px 5px; margin-right: 7px; color: #e5edcb; }
+    .broadcast-score { display: flex; align-items: center; gap: 14px; background: #101b16dc; padding: 9px 13px; border: 1px solid #edf5cf22; border-radius: 7px; backdrop-filter: blur(8px); }
+    .broadcast-score b { font-size: 20px; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+    .broadcast-score small { font-size: 9px; color: #c4cfb3; display: block; }
+    .score-divider { width: 1px; height: 24px; background: #ffffff20; }
+    .arena-bottom { position: absolute; left: 22px; right: 22px; bottom: 17px; display: flex; align-items: end; justify-content: space-between; gap: 12px; pointer-events: none; }
+    .delivery-panel { border-left: 2px solid var(--accent); padding-left: 10px; text-shadow: 0 1px 4px #0009; }
+    .delivery-panel .eyebrow { color: #bacaae; font-size: 8px; }
+    .delivery-name { font-size: 12px; font-weight: 600; margin: 3px 0 2px; }
+    .delivery-speed { font-family: ui-monospace, monospace; font-size: 11px; color: #cad3b5; }
+    .camera-label { color: #c0ccab; font-size: 8px; letter-spacing: 1.6px; text-shadow: 0 1px 4px #000; text-align: right; }
+    .feedback {
+      position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
+      text-align: center; white-space: nowrap; pointer-events: none;
+      padding: 10px 20px; border-radius: 9px; background: #111b16db;
+      border: 1px solid #ffffff1c; min-width: 180px; backdrop-filter: blur(8px);
+      transition: opacity .2s;
+    }
+    .feedback-title { font-size: 20px; font-weight: 750; letter-spacing: -.4px; color: var(--accent); }
+    .feedback-sub { font-size: 10px; color: #c7d0bf; margin-top: 1px; }
+    .feedback[data-tone="bad"] .feedback-title { color: var(--red); }
+    .feedback[data-tone="neutral"] .feedback-title { color: var(--text); }
+    .feedback[data-tone="warm"] .feedback-title { color: var(--orange); }
+    .feedback[hidden] { display: none; }
+    .modal-layer { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; padding: 24px; background: linear-gradient(110deg, #0c171ce8, #101d16a3); backdrop-filter: blur(2px); }
+    .modal-layer[hidden] { display: none; }
+    .modal { width: min(420px, 100%); text-align: center; }
+    .modal-symbol { display: grid; place-items: center; width: 55px; height: 55px; border: 1px solid #d9ef8745; background: #d9ef870b; border-radius: 50%; color: var(--accent); margin: 0 auto 21px; }
+    .modal-symbol svg { width: 27px; height: 27px; }
+    .modal .eyebrow { color: var(--accent); font-size: 10px; letter-spacing: 2.7px; }
+    .modal h2 { font-size: clamp(32px, 4vw, 49px); line-height: 1.08; font-weight: 650; letter-spacing: -2px; margin: 14px 0; }
+    .modal p { color: #bac6b7; font-size: 12px; line-height: 1.9; max-width: 310px; margin: 0 auto; }
+    .intro-keys { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 25px 0 22px; }
+    kbd { font-family: inherit; display: inline-flex; justify-content: center; align-items: center; background: #ffffff07; border: 1px solid #65705d; border-bottom-width: 3px; border-radius: 5px; width: 33px; height: 32px; font-size: 17px; color: var(--text); }
+    .intro-keys span { font-size: 10px; color: #b2bfa7; margin-left: 5px; }
+    .primary-btn { background: var(--accent); color: #1d2a15; border: 0; border-radius: 7px; min-height: 45px; padding: 0 27px; font-weight: 750; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 22px; transition: background .15s, transform .15s; }
+    .primary-btn:hover { background: #e8f5b1; transform: translateY(-1px); }
+    .primary-btn svg { width: 17px; height: 17px; }
+    .modal .micro { font-size: 9px; color: #93a28b; margin-top: 13px; }
+    .final-stats { display: flex; justify-content: center; gap: 25px; margin: 22px 0; }
+    .final-stats strong { display: block; font-size: 29px; color: var(--accent); font-weight: 650; }
+    .final-stats span { font-size: 9px; color: #aebba5; text-transform: uppercase; letter-spacing: 1px; }
+    .side-panel { border: 1px solid var(--line); border-radius: 13px; background: linear-gradient(160deg, #202923, #18201d); overflow: hidden; display: flex; flex-direction: column; }
+    .panel-section { padding: 19px 20px; }
+    .panel-section + .panel-section { border-top: 1px solid var(--line); }
+    .score-heading { display: flex; align-items: center; justify-content: space-between; }
+    .innings-badge { font-size: 8px; padding: 3px 6px; color: var(--accent); border: 1px solid #d9ef8730; border-radius: 4px; letter-spacing: 1px; }
+    .main-score { font-size: 65px; line-height: 1.15; letter-spacing: -3px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 8px; }
+    .main-score .wicket-score { font-size: 33px; color: #93a18f; letter-spacing: -1px; }
+    .score-caption { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+    .stat-cell { border-radius: 6px; border: 1px solid #3b493333; background: #0e171633; padding: 9px 10px; }
+    .stat-cell span { display: block; font-size: 8px; color: var(--muted); letter-spacing: 1.1px; }
+    .stat-cell b { display: block; font-size: 16px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .stat-cell small { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .ball-history { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 11px; }
+    .ball-slot { aspect-ratio: 1; display: grid; place-items: center; border: 1px solid #384336; border-radius: 50%; font-size: 10px; color: #82917f; font-weight: 650; }
+    .ball-slot.current { border-color: #d9ef8780; background: #d9ef8708; }
+    .ball-slot.played { color: #d7e0cf; background: #ffffff09; }
+    .ball-slot.boundary { background: #d9ef87; border-color: #d9ef87; color: #243319; }
+    .ball-slot.wicket { background: #fc817a17; border-color: #fc817a65; color: var(--red); }
+    .timing-title { display: flex; justify-content: space-between; align-items: center; }
+    .timing-status { color: var(--accent); font-size: 9px; }
+    .timing-track { position: relative; height: 8px; border-radius: 5px; background: #0f1813; margin: 16px 0 9px; border: 1px solid #3e4c38; }
+    .timing-window { position: absolute; height: 100%; left: 69%; width: 22%; background: #85944755; border-left: 1px solid #879849; border-right: 1px solid #879849; }
+    .timing-perfect { position: absolute; height: 100%; left: 77%; width: 6%; background: var(--accent); }
+    .timing-marker { position: absolute; left: 0; top: -4px; width: 3px; height: 15px; border-radius: 2px; background: #fff9df; transform: translateX(-50%); box-shadow: 0 0 5px #fff5; opacity: 0; }
+    .timing-labels { display: flex; justify-content: space-between; font-size: 8px; color: #94a18d; letter-spacing: .5px; }
+    .timing-labels .sweet-label { color: var(--accent); padding-left: 80px; }
+    .controls-section { flex: 1; }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 12px; }
+    .shot-btn { text-align: left; display: flex; gap: 8px; align-items: center; background: #ffffff03; border: 1px solid #394635; color: #dbe3d4; padding: 8px 7px; border-radius: 6px; }
+    .shot-btn:hover:not(:disabled), .shot-btn.active { border-color: var(--accent); background: #d9ef8712; }
+    .shot-btn kbd { width: 24px; height: 24px; font-size: 14px; border-color: #51604a; flex-shrink: 0; }
+    .shot-btn span { font-size: 9px; line-height: 1.3; }
+    .shot-btn small { display: block; font-size: 8px; color: #94a18d; margin-top: 2px; }
+    .control-tip { margin: 13px 0 0; color: #97a68f; font-size: 10px; line-height: 1.7; }
+    .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; gap: 12px; font-size: 10px; color: #7f907d; }
+    .footer span:first-child { display: inline-flex; align-items: center; gap: 7px; }
+    .footer svg { width: 13px; height: 13px; color: #aabc98; }
+    .footer-note { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: .6px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (min-width: 1450px) { .arena { min-height: 660px; } }
+    @media (max-width: 1100px) {
+      .shell { padding: 22px; }
+      main { grid-template-columns: minmax(0, 1fr) 254px; gap: 13px; }
+      .panel-section { padding: 17px; }
+      .arena { min-height: 555px; }
+      .arena-top { left: 15px; right: 15px; }
+      .venue-name { font-size: 10px; }
+      .broadcast-score { gap: 9px; padding: 8px 10px; }
+    }
+    @media (max-width: 780px) {
+      .shell { padding: 18px 14px; }
+      .page-heading { margin-top: 25px; }
+      .offline, .session-tag { display: none; }
+      main { grid-template-columns: 1fr; }
+      .arena { min-height: 0; height: clamp(420px, 75vw, 590px); }
+      .side-panel { display: grid; grid-template-columns: 1fr 1fr; }
+      .panel-section { padding: 16px; }
+      .panel-section:nth-child(2) { border-top: 0; border-left: 1px solid var(--line); }
+      .panel-section:nth-child(3) { border-top: 1px solid var(--line); }
+      .panel-section:nth-child(4) { border-left: 1px solid var(--line); }
+      .main-score { font-size: 50px; }
+      .control-tip { font-size: 9px; }
+      .timing-labels .sweet-label { padding-left: 35px; }
+      .stat-grid { margin-top: 10px; gap: 8px; }
+    }
+    @media (max-width: 420px) {
+      .brand-sub { font-size: 8px; letter-spacing: 1.5px; }
+      .restart-btn { font-size: 0; gap: 0; padding: 0; width: 36px; }
+      .header-actions { gap: 6px; }
+      .arena-top, .arena-bottom { left: 12px; right: 12px; }
+      .venue .eyebrow { font-size: 8px; letter-spacing: 1px; }
+      .broadcast-score { gap: 8px; }
+      .broadcast-score b { font-size: 17px; }
+      .modal-layer { padding: 18px; }
+      .panel-section { padding: 13px; }
+      .control-grid { grid-template-columns: 1fr; gap: 5px; }
+      .controls-section .shot-btn { padding: 5px 7px; }
+      .footer-note { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { button, .feedback { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="m7 16 9-10 3 3-9 10-3-3Zm9-10 3-3M5 20l2-4M4 6l3 3m-3 1 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><div class="brand-name">crease<span style="color:var(--accent)">.</span></div><div class="brand-sub">THE GAME IS IN YOUR TIMING</div></div>
+      </div>
+      <div class="header-actions">
+        <span class="offline"><i class="dot"></i>100% OFFLINE</span>
+        <button class="icon-btn" id="soundButton" type="button" title="Turn sound on" aria-label="Turn sound on" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path id="soundIcon" d="m16 9 5 6m0-6-5 6"/></svg>
+        </button>
+        <button class="icon-btn" id="pauseButton" type="button" title="Pause (Space)" aria-label="Pause game" aria-pressed="false" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path id="pauseIcon" d="M8 5v14M16 5v14"/></svg>
+        </button>
+        <button class="icon-btn restart-btn" id="restartButton" type="button" title="Start a fresh innings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" stroke-linecap="round" stroke-linejoin="round"/></svg>Restart
+        </button>
+      </div>
+    </header>
+    <div class="page-heading">
+      <div><h1>A little instinct. Perfect timing.</h1><p>12 balls. 3 wickets. Make every shot count.</p></div>
+      <div class="session-tag">QUICK PLAY / BATTING ONLY</div>
+    </div>
+    <main>
+      <section class="arena" id="arena" aria-label="Cricket game">
+        <canvas id="gameCanvas" role="img" aria-label="A perspective cricket stadium. Use the arrow keys or shot buttons to bat."></canvas>
+        <div class="arena-top">
+          <div class="venue"><div class="eyebrow"><span class="live-badge">LIVE</span>THE NIGHT SESSION</div><div class="venue-name">Crease Oval · Under the lights</div></div>
+          <div class="broadcast-score" aria-label="Live score">
+            <div><small>YOU</small><b id="broadcastScore">0 / 0</b></div><div class="score-divider"></div>
+            <div><small>OVERS</small><b id="oversValue">0.0</b></div>
+          </div>
+        </div>
+        <div class="feedback" id="feedback" hidden aria-live="polite" aria-atomic="true">
+          <div class="feedback-title" id="feedbackTitle"></div><div class="feedback-sub" id="feedbackSub"></div>
+        </div>
+        <div class="arena-bottom">
+          <div class="delivery-panel"><div class="eyebrow" id="deliveryLabel">NEXT UP</div><div class="delivery-name" id="deliveryName">Right-arm pace</div><div class="delivery-speed" id="deliverySpeed">WATCH THE BALL. FIND YOUR MOMENT.</div></div>
+          <div class="camera-label">BATTER CAM 01<br><span style="opacity:.65">PROCEDURAL · REAL-TIME</span></div>
+        </div>
+        <div class="modal-layer" id="modalLayer">
+          <div class="modal" role="dialog" aria-modal="false" aria-labelledby="modalTitle" aria-describedby="modalDescription">
+            <div class="modal-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 26V12m6 14V12m6 14V12M8 11h8m0 0h8M9 8h6m2 0h6" stroke-linecap="round"/><circle cx="23" cy="4" r="2.2"/></svg></div>
+            <div class="eyebrow" id="modalEyebrow">THE 12-BALL CHALLENGE</div>
+            <h2 id="modalTitle">Own the crease.</h2>
+            <p id="modalDescription">Read the delivery. Wait for the bounce.<br>Time your swing and send it to the stands.</p>
+            <div class="intro-keys" id="introKeys"><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd><span>Your bat. Your call.</span></div>
+            <div class="final-stats" id="finalStats" hidden></div>
+            <button class="primary-btn" id="playButton" type="button"><span id="playButtonText">Take the crease</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h15m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <p class="micro" id="modalHint">Press Enter to play · Space to pause</p>
+          </div>
+        </div>
+      </section>
+      <aside class="side-panel" aria-label="Scorecard and batting controls">
+        <section class="panel-section">
+          <div class="score-heading"><span class="eyebrow">YOUR INNINGS</span><span class="innings-badge" id="inningsBadge">READY</span></div>
+          <div class="main-score"><span id="scoreValue">0</span><span class="wicket-score"> / <span id="wicketsValue">0</span></span></div>
+          <div class="score-caption">Runs on the board</div>
+          <div class="stat-grid">
+            <div class="stat-cell"><span>BALLS FACED</span><b><span id="ballsValue" style="display:inline;font:inherit;color:inherit;letter-spacing:0">0</span><small> / 12</small></b></div>
+            <div class="stat-cell"><span>WICKETS LEFT</span><b id="wicketsLeft">3</b></div>
+          </div>
+        </section>
+        <section class="panel-section">
+          <div class="eyebrow">THE OVER STORY</div><div class="ball-history" id="ballHistory" aria-label="Results of the twelve balls"></div>
+          <p style="font-size:9px;color:var(--muted);margin:10px 0 0" id="overSummary">A fresh innings. A clean slate.</p>
+        </section>
+        <section class="panel-section">
+          <div class="timing-title"><span class="eyebrow">TIMING IS EVERYTHING</span><span class="timing-status" id="timingStatus">WAIT FOR IT</span></div>
+          <div class="timing-track" aria-hidden="true"><div class="timing-window"></div><div class="timing-perfect"></div><div class="timing-marker" id="timingMarker"></div></div>
+          <div class="timing-labels"><span>EARLY</span><span class="sweet-label">SWEET SPOT</span><span>LATE</span></div>
+        </section>
+        <section class="panel-section controls-section">
+          <div class="eyebrow">CHOOSE YOUR SHOT</div>
+          <div class="control-grid">
+            <button class="shot-btn" type="button" data-shot="left" aria-label="Left arrow: leg-side flick" disabled><kbd>←</kbd><span>Leg side<small>Flick / on-drive</small></span></button>
+            <button class="shot-btn" type="button" data-shot="right" aria-label="Right arrow: off-side drive" disabled><kbd>→</kbd><span>Off side<small>Cover drive / cut</small></span></button>
+            <button class="shot-btn" type="button" data-shot="up" aria-label="Up arrow: straight lofted drive" disabled><kbd>↑</kbd><span>Straight<small>Lofted drive</small></span></button>
+            <button class="shot-btn" type="button" data-shot="down" aria-label="Down arrow: defensive block or leave" disabled><kbd>↓</kbd><span>Defend<small>Block / leave</small></span></button>
+          </div>
+          <p class="control-tip">Swing just before the ball reaches the crease ring. One shot per delivery. Keep your eye on the bounce.</p>
+        </section>
+      </aside>
+    </main>
+    <div class="footer"><span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 2 6 3v5c0 4-6 7-6 7s-6-3-6-7V5l6-3Z"/><path d="m7 9 2 2 4-4"/></svg>No downloads. No distractions. Just cricket.</span><span class="footer-note">BUILT FOR THE SWEET SPOT.</span></div>
+    <div class="sr-only" id="scoreAnnouncement" role="status" aria-live="polite" aria-atomic="true"></div>
+    <noscript><p style="text-align:center;color:#f5a461">Enable JavaScript to play this canvas cricket game.</p></noscript>
+  </div>
+  <script>
+    (() => {
+      'use strict';
+
+      // No fetched assets, fonts, libraries, or audio: everything is drawn or synthesized.
+      const $ = id => document.getElementById(id);
+      const canvas = $('gameCanvas');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) {
+        $('modalTitle').textContent = 'Canvas unavailable';
+        $('modalDescription').textContent = 'This game needs a browser with HTML5 Canvas support.';
+        $('playButton').disabled = true;
+        return;
+      }
+      const ui = {
+        score: $('scoreValue'), wickets: $('wicketsValue'), balls: $('ballsValue'),
+        left: $('wicketsLeft'), broadcast: $('broadcastScore'), overs: $('oversValue'),
+        feedback: $('feedback'), feedbackTitle: $('feedbackTitle'), feedbackSub: $('feedbackSub'),
+        marker: $('timingMarker'), timing: $('timingStatus'), badge: $('inningsBadge'),
+        history: $('ballHistory'), summary: $('overSummary'), modal: $('modalLayer'),
+        title: $('modalTitle'), description: $('modalDescription'), eyebrow: $('modalEyebrow'),
+        keys: $('introKeys'), final: $('finalStats'), playText: $('playButtonText'),
+        hint: $('modalHint'), pause: $('pauseButton'), pauseIcon: $('pauseIcon'),
+        delivery: $('deliveryName'), speed: $('deliverySpeed'), label: $('deliveryLabel'),
+        announcement: $('scoreAnnouncement')
+      };
+      const shotButtons = [...document.querySelectorAll('[data-shot]')];
+      const TAU = Math.PI * 2;
+      const GRAVITY = 9.81;
+      const CREASE = 1.25;
+      const BALL_RADIUS = .036;
+      const FIELD_RADIUS = 43;
+      const DELIVERY_TIME_SCALE = .68; // Broadcast slow motion, while preserving physical trajectories.
+      const CONTACT_DELAY = .105;     // Wind-up -> contact -> follow-through, not instant keyboard hits.
+      const CONTACT_WINDOW = .135;
+      const PERFECT_WINDOW = .030;
+      const FIXED_STEP = 1 / 180;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const smooth = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+      const easeOut = t => 1 - (1 - clamp(t, 0, 1)) ** 3;
+      const random = (a, b) => a + Math.random() * (b - a);
+      const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+      function seededRandom(seed) {
+        return () => { seed = (Math.imul(1664525, seed) + 1013904223) >>> 0; return seed / 4294967296; };
+      }
+      const fieldPositions = [
+        [-25, 17], [25, 20], [-12, 35], [14, 37], [-34, 4], [35, 5],
+        [0, 49], [-19, -8], [20, -7]
+      ];
+      const shotNames = { left: 'Leg-side flick', right: 'Cover drive', up: 'Lofted straight drive', down: 'Defensive block' };
+      const deliveryTypes = [
+        { name: 'Outswinger', swing: 1, spin: .13, bounce: 6.5, speed: 134 },
+        { name: 'Inswinger', swing: -1, spin: -.1, bounce: 7, speed: 139 },
+        { name: 'Seam-up delivery', swing: .2, spin: .05, bounce: 6, speed: 142 },
+        { name: 'Off-break', swing: .08, spin: -.75, bounce: 8.4, speed: 103 },
+        { name: 'Leg-break', swing: -.08, spin: .7, bounce: 8.8, speed: 98 },
+        { name: 'Full-length yorker', swing: .35, spin: .04, bounce: 2.2, speed: 137 },
+        { name: 'Slower ball', swing: -.45, spin: -.13, bounce: 6.3, speed: 113 }
+      ];
+      let width = 900, height = 600, dpr = 1, backdrop = null;
+      let accumulator = 0, lastFrame = 0, visualTime = 0;
+      let audioContext = null, soundEnabled = false;
+      let game;
+
+      function makeFielders() {
+        return fieldPositions.map(([x, z], i) => ({ x, z, homeX: x, homeZ: z, running: 0, id: i }));
+      }
+      function resetGame(playing = true) {
+        game = {
+          phase: playing ? 'runup' : 'ready', phaseTime: 0, paused: false,
+          score: 0, wickets: 0, balls: 0, history: [], ball: null, swing: null,
+          shotUsed: false, shotAttempt: null, contactError: null, delivery: null,
+          fielders: makeFielders(), chaser: null, result: null,
+          particles: [], bails: [], trail: [], shake: 0, batHit: false,
+          bowler: { x: .15, z: 28.5 }, totalBoundaries: 0
+        };
+        accumulator = 0;
+        ui.feedback.hidden = true;
+        ui.marker.style.opacity = '0';
+        ui.pauseIcon.setAttribute('d', 'M8 5v14M16 5v14');
+        ui.pause.setAttribute('aria-pressed', 'false');
+        ui.pause.setAttribute('aria-label', 'Pause game');
+        ui.pause.title = 'Pause (Space)';
+        ui.modal.hidden = playing;
+        shotButtons.forEach(b => b.classList.remove('active'));
+        if (playing) beginDelivery();
+        else {
+          ui.title.textContent = 'Own the crease.';
+          ui.description.innerHTML = 'Read the delivery. Wait for the bounce.<br>Time your swing and send it to the stands.';
+          ui.eyebrow.textContent = 'THE 12-BALL CHALLENGE';
+          ui.keys.hidden = false;
+          ui.final.hidden = true;
+          ui.playText.textContent = 'Take the crease';
+          ui.hint.textContent = 'Press Enter to play · Space to pause';
+        }
+        updateScoreboard();
+        setControls();
+      }
+
+      function setControls() {
+        const active = !['ready', 'over'].includes(game.phase);
+        ui.pause.disabled = !active;
+        shotButtons.forEach(button => {
+          button.disabled = !active || game.paused || game.shotUsed || !['runup', 'delivery'].includes(game.phase);
+        });
+      }
+
+      function updateScoreboard() {
+        ui.score.textContent = game.score;
+        ui.wickets.textContent = game.wickets;
+        ui.balls.textContent = game.balls;
+        ui.left.textContent = 3 - game.wickets;
+        ui.broadcast.textContent = `${game.score} / ${game.wickets}`;
+        ui.overs.textContent = `${Math.floor(game.balls / 6)}.${game.balls % 6}`;
+        ui.badge.textContent = game.phase === 'ready' ? 'READY' : game.phase === 'over' ? 'COMPLETE' : game.paused ? 'PAUSED' : 'AT THE CREASE';
+        ui.summary.textContent = game.balls === 0 ? 'A fresh innings. A clean slate.' :
+          `${game.totalBoundaries} ${game.totalBoundaries === 1 ? 'boundary' : 'boundaries'} · ${game.wickets} ${game.wickets === 1 ? 'wicket' : 'wickets'} · ${game.balls} delivered`;
+        ui.history.replaceChildren();
+        for (let i = 0; i < 12; i++) {
+          const slot = document.createElement('span');
+          const result = game.history[i];
+          slot.className = 'ball-slot' + (result != null ? result === 'W' ? ' wicket' : result >= 4 ? ' boundary' : ' played' :
+            i === game.balls && !['ready', 'over'].includes(game.phase) ? ' current' : '');
+          slot.textContent = result != null ? result === 0 ? '·' : result : '–';
+          slot.setAttribute('aria-label', `Ball ${i + 1}: ${result != null ? result === 'W' ? 'wicket' : `${result} runs` : 'not faced'}`);
+          ui.history.append(slot);
+        }
+      }
+
+      function feedback(title, subtitle = '', tone = 'good') {
+        ui.feedback.hidden = false;
+        ui.feedbackTitle.textContent = title;
+        ui.feedbackSub.textContent = subtitle;
+        ui.feedback.dataset.tone = tone;
+      }
+
+      function beginDelivery() {
+        // Start with a readable seamer; subsequently mix lengths, pace, and spin.
+        const type = game.balls === 0 ? deliveryTypes[2] : deliveryTypes[Math.floor(random(0, deliveryTypes.length))];
+        const speed = type.speed + random(-4, 4);
+        const bounceZ = type.bounce + random(-.4, .4);
+        const releaseZ = 21.5;
+        const releaseY = 2.13;
+        const vz = -speed / 3.6;
+        const bounceTime = (releaseZ - bounceZ) / -vz;
+        const vy = (BALL_RADIUS - releaseY + .5 * GRAVITY * bounceTime ** 2) / bounceTime;
+        const swing = type.swing * random(2.6, 4.4);
+        const offStump = Math.random() < .23 && game.balls > 0;
+        const line = offStump ? (Math.random() < .5 ? -1 : 1) * random(.30, .52) : random(-.10, .10);
+        const initialX = .20;
+        const restitution = type.bounce < 3 ? .43 : .57;
+        const bounceVy = -(vy - GRAVITY * bounceTime) * restitution;
+        const totalTime = bounceTime + (bounceZ - CREASE) / (-vz * .86);
+        const afterBounceTime = totalTime - bounceTime;
+        // Aim by integrating the pre-bounce swing and post-bounce seam deviation.
+        const postAcceleration = swing * .32;
+        const spinKick = type.spin * 1.7;
+        const vx = (line - initialX - .5 * swing * bounceTime ** 2 -
+          swing * bounceTime * afterBounceTime - spinKick * afterBounceTime -
+          .5 * postAcceleration * afterBounceTime ** 2) / totalTime;
+        game.delivery = {
+          name: type.name, speed, swing, spin: type.spin, restitution,
+          releaseZ, releaseY, vz, vy, vx, initialX, bounceZ, line,
+          creaseY: BALL_RADIUS + bounceVy * afterBounceTime - .5 * GRAVITY * afterBounceTime ** 2
+        };
+        game.phase = 'runup';
+        game.phaseTime = 0;
+        game.ball = null;
+        game.swing = null;
+        game.shotUsed = false;
+        game.shotAttempt = null;
+        game.contactError = null;
+        game.batHit = false;
+        game.trail = [];
+        game.bails = [];
+        game.particles = [];
+        game.chaser = null;
+        game.result = null;
+        game.bowler = { x: .15, z: 28.5 };
+        game.fielders = makeFielders();
+        ui.feedback.hidden = true;
+        ui.marker.style.opacity = '0';
+        ui.marker.style.left = '0%';
+        ui.timing.textContent = 'WATCH THE RUN-UP';
+        ui.label.textContent = `DELIVERY ${game.balls + 1} OF 12`;
+        ui.delivery.textContent = game.delivery.name;
+        ui.speed.textContent = `${Math.round(speed)} km/h · ${Math.abs(type.spin) > .4 ? 'SPIN' : 'PACE'}`;
+        shotButtons.forEach(b => b.classList.remove('active'));
+        setControls();
+        updateScoreboard();
+      }
+
+      function releaseBall() {
+        const d = game.delivery;
+        game.ball = {
+          x: d.initialX, y: d.releaseY, z: d.releaseZ,
+          vx: d.vx, vy: d.vy, vz: d.vz, ax: d.swing,
+          bounced: false, bounces: 0, rolling: false, seam: 0,
+          age: 0, hitAge: 0, quality: 0, furthest: 0
+        };
+        game.phase = 'delivery';
+        game.phaseTime = 0;
+        ui.timing.textContent = 'WAIT FOR THE BOUNCE';
+        setControls();
+      }
+
+      function playShot(direction) {
+        if (game.paused || game.shotUsed || !['runup', 'delivery'].includes(game.phase)) return;
+        ensureAudio();
+        game.shotUsed = true;
+        game.shotAttempt = direction;
+        game.swing = { direction, time: 0, contacted: false, checked: false };
+        shotButtons.forEach(b => b.classList.toggle('active', b.dataset.shot === direction));
+        setControls();
+        if (game.phase === 'runup') {
+          game.swing.checked = true;
+          feedback('Too Early', 'Let the bowler release the ball first.', 'warm');
+          ui.timing.textContent = 'TOO EARLY';
+        }
+      }
+
+      function tryContact() {
+        const ball = game.ball;
+        const swing = game.swing;
+        if (!ball || game.phase !== 'delivery' || !swing) return;
+        // Error is real time until/after crossing the popping crease.
+        const error = (ball.z - CREASE) / Math.max(1, -ball.vz * DELIVERY_TIME_SCALE);
+        game.contactError = error;
+        if (Math.abs(error) > CONTACT_WINDOW) {
+          const early = error > 0;
+          feedback(early ? 'Too Early' : 'Too Late', early ? 'The ball is still on its way.' : 'The ball has passed your bat.', 'warm');
+          ui.timing.textContent = early ? 'TOO EARLY' : 'TOO LATE';
+          return;
+        }
+        const defend = swing.direction === 'down';
+        if (defend && Math.abs(ball.x) > .25) {
+          feedback('Good leave', 'Outside the stumps. Let it go.', 'neutral');
+          ui.timing.textContent = 'WELL JUDGED';
+          return;
+        }
+        if (Math.abs(ball.x) > .80 || ball.y > 1.65) {
+          feedback('Beaten!', 'That one moved away from the bat.', 'bad');
+          ui.timing.textContent = 'BEATEN';
+          return;
+        }
+        let quality = clamp(1 - (Math.abs(error) / CONTACT_WINDOW) ** 1.35, 0, 1);
+        const wrongSide = (swing.direction === 'left' && ball.x > .25) || (swing.direction === 'right' && ball.x < -.25);
+        if (wrongSide) quality *= .76; // Direction and line matter, not timing alone.
+        const perfect = Math.abs(error) <= PERFECT_WINDOW && !wrongSide;
+        swing.contacted = true;
+        game.batHit = true;
+        ball.quality = quality;
+        ball.bounced = false;
+        ball.bounces = 0;
+        ball.rolling = false;
+        ball.hitAge = 0;
+        ball.ax = 0;
+        const shot = swing.direction;
+        const power = defend ? 4.2 : lerp(10, 35, quality);
+        let angle;
+        if (shot === 'left') angle = -.96 + error * 2.2;
+        else if (shot === 'right') angle = 1.02 + error * 2.2;
+        else angle = clamp(ball.x * .3 + error * 1.7, -.4, .4);
+        if (defend) angle = ball.x * .7;
+        ball.vx = Math.sin(angle) * power;
+        ball.vz = Math.cos(angle) * power;
+        ball.vy = defend ? .75 : shot === 'up' ? lerp(5.0, 16.2, quality) : lerp(2.3, 5.0, quality);
+        // Mishits can pop into the infield; well-timed drives stay flatter.
+        if (!defend && quality < .4) ball.vy += 3;
+        ball.hitX = ball.x;
+        ball.hitZ = ball.z;
+        game.phase = 'flight';
+        game.phaseTime = 0;
+        game.trail = [];
+        game.shake = perfect && !defend ? .9 : .25;
+        const landingTime = (ball.vy + Math.sqrt(ball.vy ** 2 + 2 * GRAVITY * ball.y)) / GRAVITY;
+        const landing = { x: ball.x + ball.vx * landingTime, z: ball.z + ball.vz * landingTime };
+        const fromCenter = Math.hypot(landing.x, landing.z - 10);
+        if (fromCenter > FIELD_RADIUS - 2) {
+          landing.x *= (FIELD_RADIUS - 2) / fromCenter;
+          landing.z = 10 + (landing.z - 10) * (FIELD_RADIUS - 2) / fromCenter;
+        }
+        game.chaser = game.fielders.reduce((best, f) => distance(f, landing) < distance(best, landing) ? f : best);
+        game.chaser.target = landing;
+        const qualityLabel = defend ? 'Solid defense' : perfect ? 'Perfect!' : quality > .50 ? 'Good timing' : 'An edge!';
+        feedback(qualityLabel, shotNames[shot] + (wrongSide ? ' · Across the line' : ''), defend ? 'neutral' : perfect ? 'good' : 'warm');
+        ui.timing.textContent = defend ? 'BLOCKED' : perfect ? 'PERFECT!' : quality > .50 ? 'GOOD TIMING' : 'MISTIMED';
+        addParticles(ball.x, ball.y, ball.z, perfect ? 13 : 6, '#f3e7b5');
+        sound(defend ? 'block' : 'hit');
+        setControls();
+      }
+
+      function finishBall(runs, wicket = false, reason = '') {
+        if (['result', 'over'].includes(game.phase)) return;
+        game.score += runs;
+        game.balls += 1;
+        if (wicket) game.wickets += 1;
+        if (runs >= 4) game.totalBoundaries += 1;
+        game.history.push(wicket ? 'W' : runs);
+        game.result = { runs, wicket, reason };
+        game.phase = 'result';
+        game.phaseTime = 0;
+        if (wicket) {
+          feedback(reason === 'caught' ? 'Caught!' : 'Bowled!', 'A wicket falls. Reset and go again.', 'bad');
+          ui.timing.textContent = 'WICKET';
+          game.shake = 1.8;
+          sound('wicket');
+        } else if (runs >= 4) {
+          feedback(runs === 6 ? 'SIX!' : 'FOUR!', runs === 6 ? 'All the way. Into the stands.' : 'Finds the gap. Finds the rope.');
+          game.shake = 1;
+          sound('boundary');
+        } else if (runs > 0) {
+          feedback(`+${runs} ${runs === 1 ? 'run' : 'runs'}`, 'Good placement. Keep the scoreboard moving.');
+        } else {
+          const timing = game.contactError == null ? '' : game.contactError > 0 ? 'Too early. ' : 'Too late. ';
+          feedback('Dot ball', reason === 'defended' ? 'A tidy block. Your wicket is safe.' :
+            reason === 'leave' ? 'Well left. Safely through to the keeper.' :
+            game.batHit ? 'The fielder cuts it off.' : `${timing}No contact, no run.`, 'neutral');
+        }
+        ui.announcement.textContent = `Ball ${game.balls}: ${wicket ? 'wicket' : `${runs} runs`}. Score ${game.score} for ${game.wickets}.`;
+        updateScoreboard();
+        setControls();
+      }
+
+      function gameOver() {
+        game.phase = 'over';
+        game.phaseTime = 0;
+        ui.feedback.hidden = true;
+        ui.modal.hidden = false;
+        ui.eyebrow.textContent = game.wickets >= 3 ? 'ALL OUT · INNINGS COMPLETE' : '12 BALLS · INNINGS COMPLETE';
+        ui.title.textContent = game.score >= 40 ? 'What an innings.' : game.score >= 20 ? 'Nicely played.' : 'One more innings?';
+        ui.description.textContent = game.wickets >= 3 ? 'Three wickets down. The best innings starts with the next ball.' : 'That’s your twelve. A little more patience. A little more power.';
+        ui.keys.hidden = true;
+        ui.final.hidden = false;
+        ui.final.replaceChildren();
+        for (const [value, label] of [[game.score, 'runs'], [`${game.wickets}/3`, 'wickets'], [`${game.balls}/12`, 'balls']]) {
+          const stat = document.createElement('div');
+          const strong = document.createElement('strong');
+          const span = document.createElement('span');
+          strong.textContent = value;
+          span.textContent = label;
+          stat.append(strong, span);
+          ui.final.append(stat);
+        }
+        ui.playText.textContent = 'Play another innings';
+        ui.hint.textContent = 'Press Enter to restart · New innings, new possibilities';
+        updateScoreboard();
+        setControls();
+        $('playButton').focus({ preventScroll: true });
+      }
+
+      function togglePause(force) {
+        if (['ready', 'over'].includes(game.phase)) return;
+        game.paused = typeof force === 'boolean' ? force : !game.paused;
+        accumulator = 0;
+        ui.pauseIcon.setAttribute('d', game.paused ? 'm8 5 11 7-11 7V5Z' : 'M8 5v14M16 5v14');
+        ui.pause.setAttribute('aria-pressed', String(game.paused));
+        ui.pause.setAttribute('aria-label', game.paused ? 'Resume game' : 'Pause game');
+        ui.pause.title = game.paused ? 'Resume (Space)' : 'Pause (Space)';
+        if (game.paused) {
+          ui.modal.hidden = false;
+          ui.eyebrow.textContent = 'TAKE A BREATHER';
+          ui.title.textContent = 'Time out.';
+          ui.description.textContent = 'Your innings will be right here. Ready when you are.';
+          ui.keys.hidden = true;
+          ui.final.hidden = true;
+          ui.playText.textContent = 'Back to the crease';
+          ui.hint.textContent = 'Press Space or Enter to resume';
+          $('playButton').focus({ preventScroll: true });
+        } else ui.modal.hidden = true;
+        updateScoreboard();
+        setControls();
+      }
+
+      function addParticles(x, y, z, count, color) {
+        for (let i = 0; i < count; i++) {
+          game.particles.push({ x, y, z, vx: random(-2.2, 2.2), vy: random(1, 4), vz: random(-2, 2), life: random(.25, .65), total: .65, color });
+        }
+      }
+      function breakWicket() {
+        game.bails = [-.10, .10].map(x => ({
+          x, y: .77, z: 0, vx: random(-2, 2), vy: random(2.8, 4.7),
+          vz: random(-2.5, -1), angle: 0, spin: random(-12, 12), life: 2.2
+        }));
+        addParticles(0, .5, 0, 14, '#dfbe80');
+      }
+
+      function updateDelivery(dt) {
+        const ball = game.ball;
+        const t = dt * DELIVERY_TIME_SCALE;
+        const previous = { x: ball.x, y: ball.y, z: ball.z };
+        ball.vy -= GRAVITY * t;
+        ball.vx += ball.ax * t;
+        ball.x += ball.vx * t;
+        ball.y += ball.vy * t;
+        ball.z += ball.vz * t;
+        ball.age += dt;
+        ball.seam += t * (18 + Math.abs(game.delivery.spin) * 24);
+        if (ball.y <= BALL_RADIUS && ball.vy < 0) {
+          ball.y = BALL_RADIUS;
+          ball.vy = -ball.vy * game.delivery.restitution;
+          ball.vz *= .86;
+          ball.vx += game.delivery.spin * 1.7;
+          ball.ax *= .32;
+          ball.bounced = true;
+          ball.bounces++;
+          addParticles(ball.x, 0, ball.z, 7, '#c1af7c');
+          sound('bounce');
+          if (!game.shotUsed) ui.timing.textContent = 'GET READY…';
+        }
+        if (previous.z > 0 && ball.z <= 0) {
+          const fraction = previous.z / (previous.z - ball.z);
+          const x = lerp(previous.x, ball.x, fraction);
+          const y = lerp(previous.y, ball.y, fraction);
+          // Swept collision prevents high-speed balls tunneling through the stumps.
+          if (Math.abs(x) <= .155 + BALL_RADIUS && y >= 0 && y <= .79 + BALL_RADIUS) {
+            breakWicket();
+            ball.vx = random(-3, 3);
+            ball.vy = 1.8;
+            ball.vz = -3;
+            finishBall(0, true, 'bowled');
+            return;
+          }
+        }
+        if (ball.z < -3.4) finishBall(0, false, game.shotAttempt === 'down' ? 'leave' : 'miss');
+      }
+
+      function updateFlight(dt) {
+        const ball = game.ball;
+        const t = dt * 1.6; // Follow the shot briskly, without waiting through a full real-world flight.
+        ball.hitAge += dt;
+        if (ball.rolling) {
+          const speed = Math.hypot(ball.vx, ball.vz);
+          const remaining = Math.max(0, speed - 5.2 * t);
+          const ratio = speed > 0 ? remaining / speed : 0;
+          ball.vx *= ratio;
+          ball.vz *= ratio;
+          ball.y = BALL_RADIUS;
+          ball.seam += remaining * t / .09;
+        } else {
+          ball.vy -= GRAVITY * t;
+          const drag = Math.exp(-.06 * t);
+          ball.vx *= drag;
+          ball.vz *= drag;
+          ball.y += ball.vy * t;
+          ball.seam += t * 34;
+          if (ball.y <= BALL_RADIUS && ball.vy < 0) {
+            ball.y = BALL_RADIUS;
+            ball.vy *= -.32;
+            ball.vx *= .83;
+            ball.vz *= .83;
+            ball.bounced = true;
+            ball.bounces++;
+            addParticles(ball.x, 0, ball.z, 5, '#a8c080');
+            if (ball.vy < 1.1 || ball.bounces >= 3) { ball.rolling = true; ball.vy = 0; }
+          }
+        }
+        ball.x += ball.vx * t;
+        ball.z += ball.vz * t;
+        ball.furthest = Math.max(ball.furthest, Math.hypot(ball.x - ball.hitX, ball.z - ball.hitZ));
+        const radial = Math.hypot(ball.x, ball.z - 10);
+        if (radial >= FIELD_RADIUS) {
+          finishBall(!ball.bounced && ball.y > BALL_RADIUS * 2 ? 6 : 4);
+          return;
+        }
+        const f = game.chaser;
+        if (f) {
+          const target = ball.rolling || ball.bounced ? ball : f.target;
+          const dx = target.x - f.x;
+          const dz = target.z - f.z;
+          const length = Math.hypot(dx, dz);
+          const step = Math.min(length, 5.8 * t);
+          if (length > .05) { f.x += dx / length * step; f.z += dz / length * step; f.running += t * 8; }
+          if (distance(f, ball) < 1.25 && ball.hitAge > .2) {
+            if (!ball.bounced && ball.y >= .65 && ball.y <= 2.1) {
+              finishBall(0, true, 'caught');
+              sound('block');
+              return;
+            }
+            if (ball.y <= .42) {
+              const runs = game.shotAttempt === 'down' ? 0 : ball.furthest < 13 ? 0 : ball.furthest < 24 ? 1 : ball.furthest < 36 ? 2 : 3;
+              finishBall(runs, false, game.shotAttempt === 'down' ? 'defended' : 'fielded');
+              return;
+            }
+          }
+        }
+        if ((ball.rolling && Math.hypot(ball.vx, ball.vz) < .3) || ball.hitAge > 6.3) {
+          const runs = game.shotAttempt === 'down' ? 0 : ball.furthest < 11 ? 0 : ball.furthest < 24 ? 1 : ball.furthest < 37 ? 2 : 3;
+          finishBall(runs, false, game.shotAttempt === 'down' ? 'defended' : 'fielded');
+        }
+      }
+
+      function update(dt) {
+        game.phaseTime += dt;
+        game.shake = Math.max(0, game.shake - dt * 2.5);
+        if (game.phase === 'runup') {
+          const progress = game.phaseTime / 1.85;
+          game.bowler.z = lerp(28.5, 21.5, smooth(progress));
+          game.bowler.x = .15 + Math.sin(progress * Math.PI * 8) * .055;
+          if (progress >= 1) releaseBall();
+        } else if (game.phase === 'delivery') {
+          updateDelivery(dt);
+        } else if (game.phase === 'flight') {
+          updateFlight(dt);
+        } else if (game.phase === 'result') {
+          if (game.ball) {
+            const b = game.ball;
+            if (game.result.wicket && game.result.reason === 'bowled') {
+              b.vy -= GRAVITY * dt; b.y = Math.max(BALL_RADIUS, b.y + b.vy * dt);
+              b.x += b.vx * dt; b.z += b.vz * dt;
+            }
+          }
+          if (game.phaseTime >= 1.95) {
+            if (game.balls >= 12 || game.wickets >= 3) gameOver();
+            else beginDelivery();
+          }
+        }
+        if (game.swing) {
+          game.swing.time += dt;
+          if (!game.swing.checked && game.swing.time >= CONTACT_DELAY) {
+            game.swing.checked = true;
+            tryContact();
+          }
+          if (game.swing.time > .62) game.swing = null;
+        }
+        for (const p of game.particles) {
+          p.life -= dt; p.vy -= GRAVITY * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+        }
+        game.particles = game.particles.filter(p => p.life > 0 && p.y > -.03);
+        for (const b of game.bails) {
+          b.life -= dt; b.vy -= GRAVITY * dt; b.x += b.vx * dt;
+          b.y += b.vy * dt; b.z += b.vz * dt; b.angle += b.spin * dt;
+          if (b.y < .015) { b.y = .015; b.vy *= -.28; b.vx *= .8; b.vz *= .8; }
+        }
+        game.bails = game.bails.filter(b => b.life > 0);
+        if (game.ball && ['delivery', 'flight'].includes(game.phase)) {
+          game.trail.push({ x: game.ball.x, y: game.ball.y, z: game.ball.z, life: .14 });
+        }
+        game.trail.forEach(p => { p.life -= dt; });
+        game.trail = game.trail.filter(p => p.life > 0);
+      }
+
+      // Perspective projection of world-space metres; near objects scale naturally.
+      function project(x, y, z) {
+        const depth = Math.max(3, z + 15);
+        const scale = height * 1.15 / depth;
+        return { x: width * .5 + x * scale, y: height * .2 + (8 - y) * scale, scale };
+      }
+
+      function polygon(context, points, fill, stroke, lineWidth = 1) {
+        context.beginPath();
+        points.forEach((p, i) => i ? context.lineTo(p.x, p.y) : context.moveTo(p.x, p.y));
+        context.closePath();
+        if (fill) { context.fillStyle = fill; context.fill(); }
+        if (stroke) { context.strokeStyle = stroke; context.lineWidth = lineWidth; context.stroke(); }
+      }
+      function groundPolygon(context, coords, fill, stroke) {
+        polygon(context, coords.map(([x, z]) => project(x, 0, z)), fill, stroke);
+      }
+      function worldLine(context, ax, ay, az, bx, by, bz, color, thickness) {
+        const a = project(ax, ay, az), b = project(bx, by, bz);
+        context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y);
+        context.strokeStyle = color; context.lineWidth = Math.max(1, thickness * a.scale);
+        context.stroke();
+      }
+      function groundCircle(context, x, z, radius, color, lineWidth = 1) {
+        const points = [];
+        for (let i = 0; i <= 72; i++) {
+          const angle = i / 72 * TAU;
+          points.push(project(x + Math.sin(angle) * radius, .015, z + Math.cos(angle) * radius));
+        }
+        context.beginPath();
+        points.forEach((p, i) => i ? context.lineTo(p.x, p.y) : context.moveTo(p.x, p.y));
+        context.strokeStyle = color; context.lineWidth = lineWidth; context.stroke();
+      }
+
+      function buildBackdrop() {
+        backdrop = document.createElement('canvas');
+        backdrop.width = Math.round(width * dpr);
+        backdrop.height = Math.round(height * dpr);
+        const c = backdrop.getContext('2d');
+        c.scale(dpr, dpr);
+        const rng = seededRandom(20726);
+        const sky = c.createLinearGradient(0, 0, 0, height * .55);
+        sky.addColorStop(0, '#14292e'); sky.addColorStop(.52, '#42645d'); sky.addColorStop(1, '#9aa773');
+        c.fillStyle = sky; c.fillRect(0, 0, width, height);
+        for (let i = 0; i < 60; i++) {
+          c.fillStyle = `rgba(231,240,218,${rng() * .45})`;
+          c.fillRect(rng() * width, rng() * height * .22, 1, 1);
+        }
+        const stadiumY = height * .35;
+        // Curved tiers, roof trusses, deterministic crowd dots, and advertising hoardings.
+        for (let tier = 0; tier < 3; tier++) {
+          c.beginPath();
+          c.moveTo(0, stadiumY - height * (.14 - tier * .038));
+          c.quadraticCurveTo(width * .5, stadiumY - height * (.24 - tier * .038), width, stadiumY - height * (.14 - tier * .038));
+          c.lineTo(width, stadiumY + tier * height * .017);
+          c.quadraticCurveTo(width * .5, stadiumY - height * (.105 - tier * .039), 0, stadiumY + tier * height * .017);
+          c.closePath();
+          c.fillStyle = ['#1e3738', '#294545', '#35544a'][tier]; c.fill();
+          c.strokeStyle = '#7e998242'; c.lineWidth = 2; c.stroke();
+        }
+        const crowdColors = ['#a9b58b', '#779780', '#d3c29a', '#526f65', '#cfdbb0', '#896f59'];
+        for (let row = 0; row < 12; row++) {
+          const curve = row / 11;
+          for (let col = 0; col < Math.ceil(width / 5); col++) {
+            const x = col * 5 + rng() * 2;
+            const bow = (1 - ((x - width * .5) / (width * .55)) ** 2) * height * .06;
+            const y = stadiumY - height * .125 + curve * height * .11 - bow;
+            c.fillStyle = crowdColors[Math.floor(rng() * crowdColors.length)];
+            c.globalAlpha = .35 + rng() * .5;
+            c.fillRect(x, y, 1.4 + rng() * 1.4, 1.2 + rng() * 1.8);
+          }
+        }
+        c.globalAlpha = 1;
+        for (let i = 0; i <= 18; i++) {
+          const x = i / 18 * width;
+          const bow = (1 - ((x - width * .5) / (width * .55)) ** 2) * height * .06;
+          c.strokeStyle = '#172e2b'; c.lineWidth = 4;
+          c.beginPath(); c.moveTo(x, stadiumY - height * .146 - bow); c.lineTo(x, stadiumY - height * .014 - bow); c.stroke();
+        }
+        c.fillStyle = '#122b27'; c.beginPath();
+        c.moveTo(0, height * .38); c.quadraticCurveTo(width * .5, height * .17, width, height * .38);
+        c.lineTo(width, height * .41); c.quadraticCurveTo(width * .5, height * .235, 0, height * .41); c.closePath(); c.fill();
+        c.font = `700 ${Math.max(8, width * .009)}px "Segoe UI", sans-serif`;
+        c.textAlign = 'center';
+        for (let i = 0; i < 9; i++) {
+          const x = (i + .5) / 9 * width;
+          const t = x / width;
+          const y = height * (.282 + .10 * ((t - .5) * 2) ** 2);
+          c.fillStyle = i % 2 ? '#bac991' : '#e2d5b6';
+          c.fillText(i % 3 === 0 ? 'CREASE.' : i % 3 === 1 ? 'FIND YOUR MOMENT' : 'THE NIGHT SESSION', x, y);
+        }
+        // Floodlights are painted into the cached scene, including their soft bloom.
+        for (const x of [width * .09, width * .91]) {
+          c.strokeStyle = '#809080'; c.lineWidth = 3;
+          c.beginPath(); c.moveTo(x, height * .26); c.lineTo(x, height * .095); c.stroke();
+          const glow = c.createRadialGradient(x, height * .095, 0, x, height * .095, width * .095);
+          glow.addColorStop(0, '#f2f6d74d'); glow.addColorStop(1, '#f2f6d700');
+          c.fillStyle = glow; c.fillRect(x - width * .1, 0, width * .2, height * .25);
+          c.fillStyle = '#2d4440'; c.fillRect(x - 21, height * .095 - 7, 42, 12);
+          for (let j = 0; j < 6; j++) {
+            c.fillStyle = '#f0f3d1'; c.fillRect(x - 18 + j * 6.4, height * .095 - 5, 4.5, 3.5);
+            c.fillRect(x - 18 + j * 6.4, height * .095, 4.5, 3.5);
+          }
+        }
+        // Draw the outfield as a perspective-projected disc with alternating mowing bands.
+        const grass = c.createLinearGradient(0, height * .27, 0, height);
+        grass.addColorStop(0, '#537542'); grass.addColorStop(.35, '#476d36'); grass.addColorStop(1, '#2c532b');
+        const fieldPath = [];
+        for (let i = 0; i < 180; i++) {
+          const a = i / 180 * TAU;
+          fieldPath.push(project(Math.sin(a) * FIELD_RADIUS, 0, 10 + Math.cos(a) * FIELD_RADIUS));
+        }
+        polygon(c, fieldPath, grass);
+        c.save();
+        polygon(c, fieldPath, null);
+        c.clip();
+        for (let z = -32; z < 55; z += 5) {
+          if (Math.round(z / 5) % 2 === 0) groundPolygon(c, [[-75, z], [75, z], [75, z + 5], [-75, z + 5]], '#a3c57610');
+        }
+        for (let i = 0; i < 7200; i++) {
+          const x = rng() * width, y = height * .29 + rng() * height * .71;
+          c.fillStyle = rng() < .5 ? '#d9eaa50b' : '#091c140d';
+          c.fillRect(x, y, .7 + rng() * 1.5, .7);
+        }
+        groundCircle(c, 0, 10, 25, '#d4dec02d', 1);
+        groundCircle(c, 0, 10, FIELD_RADIUS, '#e4e1b6', 2.8);
+        groundCircle(c, 0, 10, FIELD_RADIUS - .28, '#192e2090', 2);
+        c.restore();
+        // Worn wicket square and the match strip.
+        groundPolygon(c, [[-4.3, -1.7], [4.3, -1.7], [4.3, 23.2], [-4.3, 23.2]], '#94904e55');
+        const pitch = c.createLinearGradient(0, height * .45, 0, height * .91);
+        pitch.addColorStop(0, '#b6a16b'); pitch.addColorStop(.6, '#c3ae79'); pitch.addColorStop(1, '#ad935f');
+        groundPolygon(c, [[-1.55, -1.6], [1.55, -1.6], [1.55, 22.6], [-1.55, 22.6]], pitch, '#dfc89430');
+        for (let i = 0; i < 2100; i++) {
+          const x = (rng() * 2 - 1) * 1.5, z = -1.5 + rng() * 24;
+          const p = project(x, .002, z);
+          c.fillStyle = i % 3 ? '#5b482f15' : '#f8e8b418';
+          c.fillRect(p.x, p.y, Math.max(.5, p.scale * .025), Math.max(.5, p.scale * .012));
+        }
+        for (let i = 0; i < 19; i++) {
+          const x = (rng() * 2 - 1) * 1.3, z = rng() * 22;
+          const p = project(x, .002, z);
+          c.strokeStyle = '#65553522'; c.lineWidth = .7;
+          c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x + rng() * 4 - 2, p.y + 3 + rng() * 7); c.stroke();
+        }
+        for (const z of [CREASE, 20.1]) {
+          worldLine(c, -1.8, .02, z, 1.8, .02, z, '#f1ebd3', .047);
+        }
+        for (const z of [0, 21.4]) {
+          worldLine(c, -1.34, .02, z, 1.34, .02, z, '#f1ebd3cb', .04);
+          for (const x of [-1.34, 1.34]) {
+            worldLine(c, x, .02, z - 1.2, x, .02, z + 1.3, '#f1ebd3cb', .04);
+          }
+        }
+        // Broadcast field branding painted into the grass, not an external texture.
+        c.save();
+        const brand = project(-4.2, 0, 12);
+        c.translate(brand.x, brand.y); c.scale(1, .42); c.rotate(-.07);
+        c.font = `800 ${height * .04}px "Segoe UI", sans-serif`;
+        c.fillStyle = '#e5e9be32'; c.textAlign = 'center'; c.fillText('CREASE.', 0, 0);
+        c.restore();
+        const vignette = c.createRadialGradient(width * .5, height * .6, height * .2, width * .5, height * .5, width * .77);
+        vignette.addColorStop(0, '#07191000'); vignette.addColorStop(1, '#06150f4d');
+        c.fillStyle = vignette; c.fillRect(0, 0, width, height);
+      }
+
+      function drawShadow(x, z, radius, opacity = .25) {
+        const p = project(x, .005, z);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, .32);
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius * p.scale);
+        gradient.addColorStop(0, `rgba(6,20,13,${opacity})`); gradient.addColorStop(1, '#06140d00');
+        ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(0, 0, radius * p.scale, 0, TAU); ctx.fill(); ctx.restore();
+      }
+
+      function drawWickets(z, broken = false) {
+        drawShadow(0, z, .46, .3);
+        for (const x of [-.112, 0, .112]) {
+          const top = project(x, .74, z), bottom = project(x, 0, z);
+          const stumpWidth = Math.max(2, top.scale * .038);
+          const grad = ctx.createLinearGradient(top.x - stumpWidth / 2, 0, top.x + stumpWidth / 2, 0);
+          grad.addColorStop(0, '#8a603b'); grad.addColorStop(.35, '#f4dfb0'); grad.addColorStop(.7, '#d7b47b'); grad.addColorStop(1, '#97713f');
+          ctx.fillStyle = grad; ctx.fillRect(top.x - stumpWidth / 2, top.y, stumpWidth, bottom.y - top.y);
+          ctx.fillStyle = '#fff2ce'; ctx.beginPath(); ctx.ellipse(top.x, top.y, stumpWidth / 2, stumpWidth / 3, 0, 0, TAU); ctx.fill();
+          for (const y of [.13, .43]) worldLine(ctx, x - .018, y, z, x + .018, y, z, '#997347', .015);
+        }
+        if (!broken) {
+          worldLine(ctx, -.15, .77, z, .01, .77, z, '#efd5a0', .032);
+          worldLine(ctx, -.01, .77, z, .15, .77, z, '#efd5a0', .032);
+        }
+      }
+
+      // Multi-jointed figures. Limbs are articulated paths, with individual pads,
+      // gloves, helmet grille, bat blade, and separate shoulders/elbows/wrists.
+      function drawHuman(x, z, kind, motion = 0) {
+        const p = project(x, 0, z);
+        const s = p.scale;
+        if (p.y < -100 || p.y > height + 200) return;
+        drawShadow(x, z, kind === 'batter' ? .58 : .40, .3);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.scale(s, s);
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const batter = kind === 'batter', bowler = kind === 'bowler';
+        let sway = 0, step = 0, lean = 0;
+        if (bowler && game.phase === 'runup') {
+          step = Math.sin(game.phaseTime * 15); sway = Math.cos(game.phaseTime * 15) * .035;
+          lean = .06 * Math.sin(game.phaseTime * 8);
+        } else if (kind === 'fielder' && motion) { step = Math.sin(motion); sway = Math.abs(step) * .04; }
+        const swing = batter && game.swing ? game.swing : null;
+        const progress = swing ? swing.time / .62 : 0;
+        const windUp = swing ? smooth(swing.time / CONTACT_DELAY) : 0;
+        const follow = swing ? easeOut((swing.time - CONTACT_DELAY) / .33) : 0;
+        const side = swing && swing.direction === 'left' ? -1 : 1;
+        const defensive = swing && swing.direction === 'down';
+        const bodyTwist = swing && !defensive ? side * Math.sin(progress * Math.PI) * .14 : 0;
+        ctx.translate(lean + bodyTwist, -sway);
+        const limb = (points, color, lineWidth) => {
+          ctx.beginPath(); points.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+          ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.stroke();
+        };
+        const trousers = batter ? '#e9e8d6' : '#c2cab0';
+        // Hip -> knee -> ankle, opposite strides during the bowler's run-up.
+        limb([[-.15, -.84], [-.22 - step * .13, -.44], [-.25 + step * .17, -.07]], trousers, .20);
+        limb([[.13, -.85], [.19 + step * .13, -.43], [.23 - step * .17, -.07]], batter ? '#ced3c0' : '#d5d9bc', .20);
+        limb([[-.29 + step * .17, -.05], [-.13 + step * .17, -.05]], '#e8e9d7', .11);
+        limb([[.17 - step * .17, -.05], [.35 - step * .17, -.05]], '#d7dcc9', .11);
+        if (batter) {
+          for (const px of [-.21, .20]) {
+            limb([[px, -.63], [px + .01, -.16]], '#f7f3df', .22);
+            for (let k = 0; k < 4; k++) limb([[px - .075, -.22 - k * .09], [px + .075, -.22 - k * .09]], '#c1c5af', .016);
+          }
+        }
+        const shirt = ctx.createLinearGradient(-.30, 0, .3, 0);
+        shirt.addColorStop(0, batter ? '#34516a' : '#a3442f');
+        shirt.addColorStop(.5, batter ? '#66849a' : '#d47b50');
+        shirt.addColorStop(1, batter ? '#36546b' : '#93462f');
+        polygon(ctx, [{x:-.17,y:-.84},{x:-.29,y:-1.37},{x:-.20,y:-1.50},{x:.21,y:-1.49},{x:.29,y:-1.35},{x:.15,y:-.84}], shirt);
+        ctx.fillStyle = batter ? '#eddfbb' : '#f0c49a'; ctx.fillRect(-.04, -1.60, .09, .13);
+        ctx.fillStyle = '#bf8e66'; ctx.beginPath(); ctx.ellipse(0, -1.68, .145, .175, -.12, 0, TAU); ctx.fill();
+        ctx.fillStyle = batter ? '#253e50' : '#493c2e';
+        ctx.beginPath(); ctx.ellipse(-.01, -1.77, .155, .12, -.10, Math.PI, TAU); ctx.fill();
+        if (batter) {
+          ctx.fillStyle = '#304c5a'; ctx.beginPath(); ctx.ellipse(-.01, -1.78, .17, .12, 0, 0, TAU); ctx.fill();
+          limb([[.05, -1.69], [.19, -1.67]], '#263d47', .065);
+          limb([[.14, -1.66], [.16, -1.52], [.01, -1.52]], '#abb9ad', .022);
+          limb([[.05, -1.59], [.17, -1.59]], '#abb9ad', .012);
+          ctx.fillStyle = '#d3debc'; ctx.font = 'bold .25px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('07', -.04, -1.12);
+          let handX = .32, handY = -.82, angle = -.38;
+          if (swing) {
+            if (defensive) {
+              handX = lerp(.32, .52, windUp); handY = lerp(-.82, -.55, windUp); angle = -.10 + follow * .2;
+            } else {
+              // Three smooth key poses: lifted wind-up, low contact, high follow-through.
+              handX = lerp(.32, .12 - side * .15, windUp);
+              handY = lerp(-.82, -1.34, windUp);
+              angle = lerp(-.38, -2.30 * side, windUp);
+              if (swing.time >= CONTACT_DELAY) {
+                handX = lerp(.46 * side, .42 * side, follow);
+                handY = lerp(-.72, -1.48, follow);
+                angle = lerp(.65 * side, 2.20 * side, follow);
+              }
+            }
+          }
+          limb([[-.24, -1.39], [-.31, -1.05], [handX - .03, handY]], '#648195', .145);
+          limb([[.23, -1.37], [.39, -1.07], [handX + .035, handY + .045]], '#3d5b72', .15);
+          ctx.save(); ctx.translate(handX, handY); ctx.rotate(angle);
+          limb([[0, -.13], [0, .22]], '#473c29', .065);
+          const blade = ctx.createLinearGradient(-.10, 0, .10, 0);
+          blade.addColorStop(0, '#ac7d42'); blade.addColorStop(.3, '#eed9a2'); blade.addColorStop(.75, '#d9bc82'); blade.addColorStop(1, '#9b6d36');
+          polygon(ctx, [{x:-.055,y:.14},{x:-.11,y:.31},{x:-.11,y:.91},{x:.08,y:.96},{x:.11,y:.88},{x:.09,y:.30},{x:.04,y:.14}], blade, '#72583a', .011);
+          ctx.fillStyle = '#334b43'; ctx.fillRect(-.087, .37, .16, .15);
+          ctx.fillStyle = '#dee6ad'; ctx.fillRect(-.04, .40, .067, .02);
+          ctx.restore();
+          limb([[handX - .04, handY], [handX + .035, handY + .045]], '#f5f0db', .15);
+        } else {
+          const release = bowler && game.phase === 'delivery' ? clamp(game.phaseTime / .35, 0, 1) :
+            bowler && game.phase === 'runup' ? smooth((game.phaseTime - 1.52) / .33) : 0;
+          const armHigh = bowler ? release : 0;
+          limb([[-.26, -1.38], [-.36, -1.0 - step * .17], [-.25, -.82 - step * .2]], '#c37851', .13);
+          limb([[.25, -1.38], [.38, lerp(-1.03 + step * .18, -1.70, armHigh)],
+            [.26, lerp(-.81 + step * .25, -2.15, armHigh)]], '#c37851', .13);
+          ctx.fillStyle = '#d1a47a'; ctx.beginPath(); ctx.arc(.26, lerp(-.81 + step * .25, -2.15, armHigh), .07, 0, TAU); ctx.fill();
+          if (bowler && game.phase === 'runup') {
+            ctx.fillStyle = '#f2e4c3'; ctx.beginPath(); ctx.arc(.26, lerp(-.84 + step * .25, -2.17, armHigh), .04, 0, TAU); ctx.fill();
+          }
+          if (kind === 'fielder') {
+            ctx.fillStyle = '#e7dcb9'; ctx.font = 'bold .21px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('C', 0, -1.14);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawBall(ball) {
+        if (!ball) return;
+        const p = project(ball.x, ball.y, ball.z);
+        if (p.x < -100 || p.x > width + 100 || p.y < -100 || p.y > height + 100) return;
+        const radius = Math.max(2.4, p.scale * BALL_RADIUS * 2.3); // Broadcast-sized for legibility.
+        drawShadow(ball.x, ball.z, .14 + ball.y * .04, Math.max(.08, .45 - ball.y * .06));
+        for (let i = 0; i < game.trail.length; i += 3) {
+          const t = game.trail[i], a = project(t.x, t.y, t.z);
+          ctx.fillStyle = `rgba(242,230,182,${t.life / .14 * .23})`;
+          ctx.beginPath(); ctx.arc(a.x, a.y, Math.max(1, radius * .65 * t.life / .14), 0, TAU); ctx.fill();
+        }
+        const glow = ctx.createRadialGradient(p.x, p.y, radius, p.x, p.y, radius * 4);
+        glow.addColorStop(0, '#f8edc638'); glow.addColorStop(1, '#f8edc600');
+        ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(p.x, p.y, radius * 4, 0, TAU); ctx.fill();
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(ball.seam);
+        const leather = ctx.createRadialGradient(-radius * .35, -radius * .4, radius * .05, 0, 0, radius);
+        leather.addColorStop(0, '#fffdef'); leather.addColorStop(.5, '#ede5c9'); leather.addColorStop(.8, '#c9c0a6'); leather.addColorStop(1, '#8c8b77');
+        ctx.fillStyle = leather; ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.fill();
+        ctx.save(); ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.clip();
+        ctx.strokeStyle = '#937759'; ctx.lineWidth = Math.max(.5, radius * .12);
+        ctx.beginPath(); ctx.ellipse(0, 0, radius * .38, radius * 1.06, .08, 0, TAU); ctx.stroke();
+        ctx.strokeStyle = '#fcf4d5'; ctx.lineWidth = Math.max(.5, radius * .08);
+        ctx.setLineDash([radius * .17, radius * .16]);
+        ctx.beginPath(); ctx.ellipse(0, 0, radius * .53, radius * 1.07, .08, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i < 12; i++) {
+          const a = i * 2.399, r = radius * Math.sqrt((i + .5) / 12) * .85;
+          ctx.fillStyle = i % 2 ? '#ffffff35' : '#7a725b30';
+          ctx.fillRect(Math.cos(a) * r, Math.sin(a) * r, .65, .65);
+        }
+        ctx.restore(); ctx.restore();
+      }
+
+      function drawCreaseTarget() {
+        const active = game.phase === 'delivery';
+        const p = project(0, .01, CREASE);
+        const imminent = active ? clamp(1 - (game.ball.z - CREASE) / 5, 0, 1) : 0;
+        const radius = p.scale * (.62 - imminent * .12);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, .31);
+        ctx.strokeStyle = active ? `rgba(224,243,156,${.40 + imminent * .45})` : '#d9ef8733';
+        ctx.lineWidth = active ? 2 : 1.2;
+        if (!active) ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.stroke();
+        if (imminent > .6) {
+          ctx.fillStyle = `rgba(217,239,135,${imminent * .09})`;
+          ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        ctx.save();
+        if (!reducedMotion && game.shake && !game.paused) {
+          ctx.translate(Math.sin(visualTime * 73) * game.shake * 2.5, Math.cos(visualTime * 61) * game.shake * 1.5);
+        }
+        ctx.drawImage(backdrop, 0, 0, width, height);
+        drawCreaseTarget();
+        // Painter's algorithm: render farther world objects first.
+        const objects = game.fielders.map(f => ({ z: f.z, render: () => drawHuman(f.x, f.z, 'fielder', f.running) }));
+        objects.push({ z: 21.4, render: () => drawWickets(21.4) });
+        const followThrough = game.phase === 'delivery' ? Math.min(game.phaseTime * 4, 1.1) : 0;
+        objects.push({ z: game.bowler.z - followThrough, render: () => drawHuman(game.bowler.x + followThrough * .28, game.bowler.z - followThrough, 'bowler') });
+        objects.push({ z: .78, render: () => drawHuman(-.69, .78, 'batter') });
+        objects.push({ z: 0, render: () => drawWickets(0, game.bails.length > 0 || !!(game.result && game.result.reason === 'bowled')) });
+        if (game.ball) objects.push({ z: game.ball.z, render: () => drawBall(game.ball) });
+        objects.sort((a, b) => b.z - a.z).forEach(object => object.render());
+        for (const p of game.particles) {
+          const point = project(p.x, p.y, p.z);
+          ctx.globalAlpha = clamp(p.life / p.total, 0, 1);
+          ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(point.x, point.y, Math.max(1, point.scale * .022), 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        for (const bail of game.bails) {
+          const point = project(bail.x, bail.y, bail.z);
+          ctx.save(); ctx.translate(point.x, point.y); ctx.rotate(bail.angle);
+          ctx.fillStyle = '#f2dab0'; ctx.fillRect(-point.scale * .09, -point.scale * .018, point.scale * .18, Math.max(1.5, point.scale * .036));
+          ctx.restore();
+        }
+        // Small directional field labels reinforce the arrow-to-world mapping.
+        ctx.font = '600 8px "Segoe UI", sans-serif'; ctx.fillStyle = '#e3e9c14a'; ctx.textAlign = 'center';
+        ctx.fillText('LEG SIDE', width * .15, height * .69);
+        ctx.fillText('OFF SIDE', width * .85, height * .69);
+        ctx.restore();
+      }
+
+      function updateTimingMarker() {
+        const ball = game.ball;
+        if (game.phase === 'delivery' && ball) {
+          // Sweet spot is centred on INPUT time, factoring in the bat's wind-up.
+          const remaining = (ball.z - CREASE) / Math.max(1, -ball.vz * DELIVERY_TIME_SCALE);
+          const progress = clamp(.80 + (CONTACT_DELAY - remaining) * .74, 0, 1);
+          ui.marker.style.opacity = '1';
+          ui.marker.style.left = `${progress * 100}%`;
+        } else if (game.phase === 'runup' || game.phase === 'ready') {
+          ui.marker.style.opacity = '0';
+        }
+      }
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        width = Math.max(1, rect.width);
+        height = Math.max(1, rect.height);
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        buildBackdrop();
+        draw();
+      }
+
+      function ensureAudio() {
+        if (!soundEnabled) return;
+        try {
+          if (!audioContext) {
+            const Audio = window.AudioContext || window.webkitAudioContext;
+            if (Audio) audioContext = new Audio();
+          }
+          if (audioContext && audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+        } catch { audioContext = null; }
+      }
+
+      function sound(type) {
+        if (!soundEnabled || !audioContext || audioContext.state !== 'running') return;
+        const now = audioContext.currentTime;
+        if (type === 'boundary') {
+          for (let i = 0; i < 3; i++) {
+            const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+            osc.type = 'sine'; osc.frequency.value = [440, 554.37, 659.25][i];
+            gain.gain.setValueAtTime(0, now + i * .065);
+            gain.gain.linearRampToValueAtTime(.025, now + i * .065 + .02);
+            gain.gain.exponentialRampToValueAtTime(.001, now + i * .065 + .35);
+            osc.connect(gain); gain.connect(audioContext.destination);
+            osc.start(now + i * .065); osc.stop(now + i * .065 + .36);
+          }
+          return;
+        }
+        const duration = type === 'wicket' ? .22 : .09;
+        const buffer = audioContext.createBuffer(1, Math.ceil(audioContext.sampleRate * duration), audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) ** 3;
+        const source = audioContext.createBufferSource();
+        const filter = audioContext.createBiquadFilter();
+        const gain = audioContext.createGain();
+        source.buffer = buffer; filter.type = 'lowpass';
+        filter.frequency.value = type === 'bounce' ? 330 : type === 'wicket' ? 2400 : 1250;
+        gain.gain.value = type === 'bounce' ? .075 : .20;
+        source.connect(filter); filter.connect(gain); gain.connect(audioContext.destination);
+        source.start();
+      }
+
+      function startOrResume() {
+        ensureAudio();
+        if (game.paused) togglePause(false);
+        else resetGame(true);
+        $('playButton').blur();
+      }
+      $('playButton').addEventListener('click', startOrResume);
+      $('restartButton').addEventListener('click', () => { ensureAudio(); resetGame(true); });
+      ui.pause.addEventListener('click', () => togglePause());
+      shotButtons.forEach(button => button.addEventListener('click', () => playShot(button.dataset.shot)));
+      $('soundButton').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        $('soundButton').setAttribute('aria-pressed', String(soundEnabled));
+        $('soundButton').setAttribute('aria-label', soundEnabled ? 'Turn sound off' : 'Turn sound on');
+        $('soundButton').title = soundEnabled ? 'Turn sound off' : 'Turn sound on';
+        $('soundIcon').setAttribute('d', soundEnabled ? 'M16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14' : 'm16 9 5 6m0-6-5 6');
+        ensureAudio();
+      });
+      document.addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName) || event.target.isContentEditable) return;
+        const keys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
+        if (keys[event.key]) {
+          event.preventDefault();
+          if (!event.repeat) playShot(keys[event.key]);
+        } else if (event.code === 'Space') {
+          // Let a focused button retain its standard native Space activation.
+          if (event.target.tagName === 'BUTTON') return;
+          event.preventDefault();
+          if (!event.repeat) {
+            if (game.phase === 'ready' || game.phase === 'over') startOrResume();
+            else togglePause();
+          }
+        } else if (event.key === 'Enter' && (game.paused || ['ready', 'over'].includes(game.phase)) && event.target.tagName !== 'BUTTON') {
+          event.preventDefault();
+          if (!event.repeat) startOrResume();
+        }
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !['ready', 'over'].includes(game.phase) && !game.paused) togglePause(true);
+        lastFrame = 0;
+        accumulator = 0;
+      });
+      window.addEventListener('blur', () => {
+        if (!['ready', 'over'].includes(game.phase) && !game.paused) togglePause(true);
+      });
+      window.addEventListener('resize', resize);
+
+      function frame(timestamp) {
+        if (!lastFrame) lastFrame = timestamp;
+        const elapsed = Math.min((timestamp - lastFrame) / 1000, .05);
+        lastFrame = timestamp;
+        if (!game.paused) {
+          visualTime += elapsed;
+          accumulator += elapsed;
+          while (accumulator >= FIXED_STEP) {
+            if (!['ready', 'over'].includes(game.phase)) update(FIXED_STEP);
+            accumulator -= FIXED_STEP;
+          }
+        }
+        updateTimingMarker();
+        draw();
+        requestAnimationFrame(frame);
+      }
+      resetGame(false);
+      resize();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

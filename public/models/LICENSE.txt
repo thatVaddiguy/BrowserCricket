@@ -1,0 +1,12 @@
+Mixed asset licenses — do not relabel the library characters as CC0.
+
+Microsoft Rocketbox Sports_Male_01 anatomy, photographic skin/head textures
+and their derivatives in batter.glb, fielder.glb, crowd.glb, crowd-atlas.png
+and crowd-mask.png are MIT licensed. Copyright (c) 2020 Microsoft.
+The full required notice is included in ROCKETBOX-LICENSE.txt.
+Source: https://github.com/microsoft/Microsoft-Rocketbox
+
+Original Crease cricket skeletons, actions, equipment, cloth/willow textures,
+and the legacy crowd-far.glb were authored in Blender through Blender MCP
+for this project and dedicated under CC0 1.0 Universal (CC0-1.0).
+This dedication does not apply to Rocketbox assets or dependencies.

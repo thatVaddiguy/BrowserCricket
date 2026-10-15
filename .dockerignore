@@ -1,0 +1,18 @@
+# Host dependencies and outputs are rebuilt inside the image.
+node_modules
+dist
+test-results
+playwright-report
+.git
+.DS_Store
+__pycache__
+*.pyc
+
+# Blender/library sources are not needed at runtime; the game uses public/models.
+assets
+tools
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

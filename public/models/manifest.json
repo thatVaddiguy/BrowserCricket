@@ -1,0 +1,105 @@
+{
+  "license": "Mixed MIT and CC0-1.0; see LICENSE.txt and ROCKETBOX-LICENSE.txt",
+  "authoring": "Rocketbox Sports_Male_01 imported, fitted, reweighted and exported through Blender MCP. Original cricket equipment/actions retained. Crowd sprites baked in Blender.",
+  "library": {
+    "name": "Microsoft Rocketbox",
+    "asset": "Sports_Male_01",
+    "url": "https://github.com/microsoft/Microsoft-Rocketbox",
+    "license": "MIT",
+    "copyright": "Copyright (c) 2020 Microsoft"
+  },
+  "editableSource": "assets/blender/cricket-library-players.blend",
+  "blenderVersion": "5.2.2 LTS",
+  "meters": true,
+  "bones": 19,
+  "contactSeconds": 0.105,
+  "pickupSeconds": 0.32,
+  "crowd": {
+    "count": 8640,
+    "sectors": 12,
+    "farTriangles": 17280,
+    "nearDistanceMeters": 18,
+    "nearInstancesMax": 480,
+    "batchesMax": 84,
+    "atlasPixels": [
+      768,
+      512
+    ],
+    "poses": [
+      "cheering",
+      "clapping",
+      "seated"
+    ]
+  },
+  "files": {
+    "batter.glb": {
+      "bytes": 1526460,
+      "sha256": "a0c7f60dcd287aabb8c4d750ce2e703be92fdf762851ece59bf5f2c9771ef57e",
+      "license": [
+        "MIT",
+        "CC0-1.0"
+      ]
+    },
+    "fielder.glb": {
+      "bytes": 1166260,
+      "sha256": "1732282aa8618c9f043341cef7721dcd5b3e6fd6df2c9dade32b77f159409aa5",
+      "license": [
+        "MIT",
+        "CC0-1.0"
+      ]
+    },
+    "crowd.glb": {
+      "bytes": 582444,
+      "sha256": "639f3c5b49bd04a7ebf62f3e6126fde264927e7c6bdc68e90e75d834ec556f98",
+      "license": [
+        "MIT",
+        "CC0-1.0"
+      ]
+    },
+    "crowd-atlas.png": {
+      "bytes": 119367,
+      "sha256": "404b87fda65e068645a51b03f747b5de62c6121666c934322804d4453b693363",
+      "license": [
+        "MIT",
+        "CC0-1.0"
+      ]
+    },
+    "crowd-mask.png": {
+      "bytes": 56424,
+      "sha256": "47977b803262c51adce8b13196b30c86bf8d14b13b74c75bf70aac21c879c9dc",
+      "license": [
+        "MIT",
+        "CC0-1.0"
+      ]
+    }
+  },
+  "triangles": {
+    "batter.glb": 14258,
+    "fielder.glb": 7806,
+    "crowd.glb": 2805
+  },
+  "clips": {
+    "batter.glb": [
+      "run",
+      "turn",
+      "stance",
+      "drive_left",
+      "drive_right",
+      "drive_up",
+      "defend"
+    ],
+    "fielder.glb": [
+      "idle",
+      "run",
+      "turn",
+      "bowl",
+      "pickup",
+      "throw",
+      "catch"
+    ],
+    "crowd.glb": []
+  },
+  "legacy": {
+    "crowd-far.glb": "Preserved original CC0 asset; no longer loaded."
+  }
+}

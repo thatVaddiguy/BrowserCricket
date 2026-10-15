@@ -1,0 +1,44 @@
+# Production game:     docker compose up --build              -> http://localhost:8080
+# Hot-reload dev:      docker compose --profile dev up --build dev -> http://localhost:5173
+# Unit tests:          docker compose --profile test run --rm test
+# Browser playtests:   docker compose --profile test run --rm browser-test
+services:
+  game:
+    build:
+      context: .
+      target: production
+    image: crease-cricket:latest
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      # Bind-mounted files from Windows/macOS hosts do not emit inotify events.
+      VITE_USE_POLLING: "true"
+    volumes:
+      - ./:/app
+      # Keep the container's Linux node_modules; never mix in the host's.
+      - /app/node_modules
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+
+  browser-test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: browser-test
+    ipc: host
+    volumes:
+      # Screenshots and failure traces land in the host's test-results/.
+      - ./test-results:/app/test-results

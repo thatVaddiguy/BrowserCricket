@@ -1,0 +1,35 @@
+{
+  "library": "Microsoft Rocketbox",
+  "repository": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "treeSha": "0943055db6ec570bcef9f2c8b41c9e5467c808f9",
+  "importedOn": "2026-10-06",
+  "license": "MIT",
+  "files": {
+    "m021_body_color.tga": {
+      "upstreamPath": "Assets/Avatars/Professions/Sports_Male_01/Textures/m021_body_color.tga",
+      "gitBlobSha1": "fc031787b8c19d93ff8e06bc814456f5646e7c85",
+      "sha256": "339b846c274d2b8cb5d717ddd3cbc18a9623cc3f4fd8aa7430232c57376feb72"
+    },
+    "m021_head_normal.tga": {
+      "upstreamPath": "Assets/Avatars/Professions/Sports_Male_01/Textures/m021_head_normal.tga",
+      "gitBlobSha1": "55c197f2e060eca983d34ee7e43f81f81ccf2898",
+      "sha256": "d59b32f8baed259cf5cb2069031f935866dcdcddf3a8821fb08fb4ba180940fb"
+    },
+    "Sports_Male_01.fbx": {
+      "upstreamPath": "Assets/Avatars/Professions/Sports_Male_01/Export/Sports_Male_01.fbx",
+      "gitBlobSha1": "e06668c448908b434f1032cf5922953aa9c58393",
+      "sha256": "dc63f02885e37786e0ed5c4d441f565dcfab4eac71f31a208edca74fe5cea8ed"
+    },
+    "LICENSE.md": {
+      "upstreamPath": "LICENSE.md",
+      "gitBlobSha1": "9bcfb3ece5301a55d3a41bbd00a029ab27d61d13",
+      "sha256": "17474e386e0b9e1a700cc3d06b2b0882a2c376d9c6b49c7f8274409b8f8d2352"
+    },
+    "m021_head_color.tga": {
+      "upstreamPath": "Assets/Avatars/Professions/Sports_Male_01/Textures/m021_head_color.tga",
+      "gitBlobSha1": "67d497afd907ff3a5dceded82dbed8bef5c8636e",
+      "sha256": "8edb8b17ddcc2da63ae9531da3f6dccbe75dcfe26519b79faa4110c0c84e1664"
+    }
+  },
+  "adaptation": "Sports avatar fitted to existing 19-bone cricket rig. Facial/finger weights collapsed to head/hand joints. Local kit, equipment and actions retained. Derived crowd poses baked and decimated."
+}
